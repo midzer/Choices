@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Fuse from 'fuse.js';
+//import Fuse from 'fuse.js';
 import merge from 'deepmerge';
 
 import Store from './store/store';
@@ -930,7 +930,7 @@ class Choices {
     );
 
     // If sorting is enabled or the user is searching, filter choices
-    if (this.config.shouldSort || this._isSearching) {
+    if (this.config.shouldSort) {
       normalChoices.sort(filter);
     }
 
@@ -943,7 +943,7 @@ class Choices {
 
     if (this._isSearching) {
       choiceLimit = searchResultLimit;
-    } else if (renderChoiceLimit && renderChoiceLimit > 0 && !withinGroup) {
+    } else if (renderChoiceLimit != -1 && !withinGroup) {
       choiceLimit = renderChoiceLimit;
     }
 
@@ -1284,13 +1284,53 @@ class Choices {
         ? this._currentValue.trim()
         : this._currentValue;
 
-    if (newValue.length < 1 && newValue === `${currentValue} `) {
+    if (newValue.length < 3 || newValue === `${currentValue} `) {
       return 0;
     }
 
     // If new value matches the desired length and is not the same as the current value with a space
     const haystack = this._store.searchableChoices;
-    const needle = newValue;
+    const needle = newValue.toLowerCase();
+
+    function kmpSearch(pattern, text) {
+      if (pattern.length == 0) return 0; // Immediate match
+
+      // Compute longest suffix-prefix table
+      var lsp = [0]; // Base case
+      for (var i = 1; i < pattern.length; i++) {
+        var j = lsp[i - 1]; // Start by assuming we're extending the previous LSP
+        while (j > 0 && pattern.charAt(i) != pattern.charAt(j)) j = lsp[j - 1];
+        if (pattern.charAt(i) == pattern.charAt(j)) j++;
+        lsp.push(j);
+      }
+
+      // Walk through text string
+      var j = 0; // Number of chars matched in pattern
+      for (var i = 0; i < text.length; i++) {
+        while (j > 0 && text.charAt(i) != pattern.charAt(j)) j = lsp[j - 1]; // Fall back in the pattern
+        if (text.charAt(i) == pattern.charAt(j)) {
+          j++; // Next char matched, increment position
+          if (j == pattern.length) return i - (j - 1);
+        }
+      }
+      return -1; // Not found
+    }
+    const results: Result<Choice>[] = [];
+    //let results: Choice[];
+    let count = 0;
+    for (let i = 0, j = haystack.length; i < j; i++) {
+      const entry = haystack[i];
+      if (kmpSearch(needle, entry.value.toLowerCase()) != -1) {
+        //const choice: Choice = entry;
+        results.push({
+          item: entry,
+        } as Result<Choice>);
+        if (++count === 100) {
+          break;
+        }
+      }
+    }
+    /*
     const keys = [...this.config.searchFields];
     const options = Object.assign(this.config.fuseOptions, {
       keys,
@@ -1298,6 +1338,7 @@ class Choices {
     });
     const fuse = new Fuse(haystack, options);
     const results: Result<Choice>[] = fuse.search(needle) as any[]; // see https://github.com/krisk/Fuse/issues/303
+    */
 
     this._currentValue = newValue;
     this._highlightPosition = 0;
