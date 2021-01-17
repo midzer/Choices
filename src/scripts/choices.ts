@@ -151,9 +151,10 @@ class Choices {
       );
     }
 
-    this._isTextElement = passedElement.type === TEXT_TYPE;
-    this._isSelectOneElement = passedElement.type === SELECT_ONE_TYPE;
-    this._isSelectMultipleElement = passedElement.type === SELECT_MULTIPLE_TYPE;
+    this._isTextElement = passedElement.dataset.type === TEXT_TYPE;
+    this._isSelectOneElement = passedElement.dataset.type === SELECT_ONE_TYPE;
+    this._isSelectMultipleElement =
+      passedElement.dataset.type === SELECT_MULTIPLE_TYPE;
     this._isSelectElement =
       this._isSelectOneElement || this._isSelectMultipleElement;
 
