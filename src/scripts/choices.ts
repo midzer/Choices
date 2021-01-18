@@ -931,7 +931,7 @@ class Choices {
     );
 
     // If sorting is enabled or the user is searching, filter choices
-    if (this.config.shouldSort) {
+    if (this._isSearching /*this.config.shouldSort*/) {
       normalChoices.sort(filter);
     }
 
@@ -1330,6 +1330,23 @@ class Choices {
           break;
         }
       }
+    }
+    // Sort
+    results.sort(function(a, b) {
+      var aIndex = a.item.value.toLowerCase().indexOf(needle);
+      var bIndex = b.item.value.toLowerCase().indexOf(needle);
+      if (aIndex < bIndex) {
+        return -1;
+      }
+      if (aIndex > bIndex) {
+        return 1;
+      }
+      return 0;
+    });
+    // Give score
+    var score = 0;
+    for (var i = 0; i < results.length; i++) {
+      results[i].item.score = ++score;
     }
     /*
     const keys = [...this.config.searchFields];
